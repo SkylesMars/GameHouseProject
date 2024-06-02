@@ -1,0 +1,134 @@
+{
+  "name": "Board Cafe",
+
+  "servePlaceIds": [17613863647],
+
+  "tree": {
+    "$className": "DataModel",
+
+
+    "ReplicatedFirst": {
+      "GameFiles": {
+        "$className": "Folder",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedFirst/Shared"
+        },
+
+        "Local": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedFirst/Local_Cafe"
+        }
+      }
+    },
+
+
+    "ReplicatedStorage": {
+      "GameFiles": {
+        "$className": "Folder",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedStorage/Shared"
+          
+        },
+
+        "Local": {
+          "$className": "Folder",
+          "$path": "src/ReplicatedStorage/Local_Cafe"
+        }
+      }
+    },
+
+
+    "ServerScriptService": {
+      "GameFiles": {
+        "$className": "Folder",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/ServerScriptService/Shared"
+        },
+
+        "Local": {
+          "$className": "Folder",
+          "$path": "src/ServerScriptService/Local_Cafe"
+        }
+      }
+    },
+
+
+    "ServerStorage": {
+      "GameFiles": {
+        "$className": "Folder",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/ServerStorage/Shared"
+        },
+
+        "Local": {
+          "$className": "Folder",
+          "$path": "src/ServerStorage/Local_Cafe"
+        }
+      }
+    },
+
+
+    "StarterGui": {
+      "GameFiles": {
+        "$className": "Folder",
+
+        "Shared": {
+          "$className": "Folder",
+          "$path": "src/PlayerGui/Shared"
+        },
+
+        "Local": {
+          "$className": "Folder",
+          "$path": "src/PlayerGui/Local_Cafe"
+        }
+      }
+    },
+
+
+    "StarterPlayer": {
+
+      "StarterPlayerScripts":{
+        "GameFiles": {
+          "$className": "Folder",
+  
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/StarterPlayerScripts/Shared"
+          },
+  
+          "Local": {
+            "$className": "Folder",
+            "$path": "src/StarterPlayerScripts/Local_DevHub"
+          }
+        }
+      },
+
+
+      "StarterCharacterScripts":{
+        "GameFiles": {
+          "$className": "Folder",
+  
+          "Shared": {
+            "$className": "Folder",
+            "$path": "src/StarterCharacterScripts/Shared"
+          },
+  
+          "Local": {
+            "$className": "Folder",
+            "$path": "src/StarterCharacterScripts/Local_DevHub"
+          }
+        }
+      }
+    }
+
+    
+  }
+}
