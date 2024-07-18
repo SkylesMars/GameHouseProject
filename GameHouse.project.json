@@ -1,0 +1,72 @@
+{
+  "name": "GameHouse",
+
+
+
+  "tree": {
+    "$className": "DataModel",
+
+    "Workspace": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/Workspace"
+      }
+    },
+
+    "ReplicatedFirst": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/ReplicatedFirst"
+      }
+    },
+
+    "ReplicatedStorage": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/ReplicatedStorage"
+      }
+    },
+
+    "ServerScriptService": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/ServerScriptService"
+      }
+    },
+
+    "ServerStorage": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/ServerStorage"
+      }
+    },
+
+    "StarterGui": {
+      "GameFiles": {
+        "$className": "Folder",
+        "$path": "src/PlayerGui"
+      }
+    },
+
+
+
+    "StarterPlayer": {
+
+      "StarterPlayerScripts":{
+        "GameFiles": {
+          "$className": "Folder",
+          "$path": "src/StarterPlayer/StarterPlayerScripts"
+        }
+      },
+
+      "StarterCharacterScripts":{
+        "GameFiles": {
+          "$className": "Folder",
+          "$path": "src/StarterPlayer/StarterCharacterScripts"
+        }
+      }
+    }
+
+    
+  }
+}
