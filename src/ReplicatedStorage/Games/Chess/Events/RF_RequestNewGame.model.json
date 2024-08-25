@@ -1,0 +1,9 @@
+{
+    "ClassName": "RemoteFunction",
+
+    "[ DEV NOTES ]": [
+        "Used by the client to tell the server to initiate a chess game"
+    ]
+
+    
+}
