@@ -18,10 +18,10 @@ SERVICES AND IMPORTANT PATHS:
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
-
+local Players = game:GetService("Players")
 --------------------------------------------------------------------------------------------------------------------------
 
-local Player = game.Players.LocalPlayer
+local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -40,23 +40,6 @@ local Debug_BoardMainFrame = Debug_BoardGui.BoardMainFrame
 CONFIG:
 ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔]]
 
---------------------------------------------------------------------------------------------------------------------------
----Image IDs to use for the pieces
-local PieceImageList = {
-[ Piece.White + Piece.King ] = "rbxassetid://131158620290995",
-[ Piece.White + Piece.Pawn ] = "rbxassetid://138241308799606",
-[ Piece.White + Piece.Knight ] = "rbxassetid://87502654853841",
-[ Piece.White + Piece.Bishop ] = "rbxassetid://124200432163916",
-[ Piece.White + Piece.Rook ] = "rbxassetid://131889736443318",
-[ Piece.White + Piece.Queen ] = "rbxassetid://121994979957080",
-
-[ Piece.Black + Piece.King ] = "rbxassetid://138277852159029",
-[ Piece.Black + Piece.Pawn ] = "rbxassetid://79703474237153",
-[ Piece.Black + Piece.Knight ] = "rbxassetid://81040715472662",
-[ Piece.Black + Piece.Bishop ] = "rbxassetid://120857166062773",
-[ Piece.Black + Piece.Rook ] = "rbxassetid://138921760605947",
-[ Piece.Black + Piece.Queen ] = "rbxassetid://92861639866902"
-}
 
 local TileImageConfig = {
     
@@ -68,35 +51,183 @@ local TileImageConfig = {
 ChessGame_Client CLASS:
 ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔]]
 
----@class GuiBoard
----Gui of the chess game.
+---@class ChessGame_Client
+---Class which represents the chess game on the client side.
 local ChessGame_Client = {}
 ChessGame_Client.__index = ChessGame_Client
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ---Creates a new ChessGame array/object
----@param NewBoardParams table Array containing the desired info for the chess game.
+---@param NewBoardParams table Array containing the desired info and properties for the chess game.
 ---@return table NewChessGui The newlly created GuiBoard.
 function ChessGame_Client.new(NewBoardParams)
-    local NewChessGame = setmetatable(NewBoardParams or {}, ChessGame_Client)
+    local NewGame = setmetatable(NewBoardParams or {}, ChessGame_Client)
+
+    --------------------------------------------------------------------------------------------------------------------------
+    --[[CONFIG HANDLING:]]--
     
+    --[[ BoardFrame config: ]]--
+
+    ---@type number
+    ---The value used for the UIStroke of the BoardFrame to give it it's border.
+    NewGame.BoardFrame_StrokeThickness = NewGame.BoardFrame_StrokeThickness or 5
+
+    ---@type Color3
+    ---The "background" color of the gui chess game.
+    NewGame.BoardFrame_Color = NewGame.BoardFrame_Color or Color3.new(0.137254, 0.137254, 0.254901)
+
+    ---@type number
+    ---The value to apply to the Transparency property of the background of the gui board (aka.: BoardFrame).
+    NewGame.BoardFrame_Transparency = NewGame.BoardFrame_Transparency or 0
+
+    --[[ TileFrame config: ]]--
+
+    ---@type UDim
+    ---Value used for the CornerRadius property of the UICorner for each of the Gui tiles (TileFrame(s)) of the board.
+    NewGame.TileFrame_CornerRadius = NewGame.TileFrameCornerRadius or UDim.new(0.1, 0)
+
+    ---@type number
+    --[[Represents for much of the alocated space for each Gui tile will be used for the Tileframe it self.
+    A value of 1 alocates the maximum amount of space for the tile leaving no space in between tiles,
+    while a value of 0.5 (for the sake of example) would alocate half of the avalible space for the tile, leaving quite a large space in between tiles.]]
+    NewGame.TileFrame_Size = NewGame.TileFrameSize or 0.9
+
+    ---@type Color3
+    ---The Color to apply to white/light gui tiles.
+    NewGame.TileFrame_LightColor = NewGame.TileFrame_LightColor or Color3.new(1, 1, 1)
+
+    ---@type Color3
+    ---The Color to apply to white/light gui tiles.
+    NewGame.TileFrame_DarkColor = NewGame.TileFrame_DarkColor or Color3.new(0.5, 0.5, 0.5)
+
+    ---@type number
+    ---The transparency value to apply to the gui tiles (TileFrames(s)) of the board.
+    NewGame.TileFrame_Transparency = NewGame.TileFrame_Transparency or 0.7
+
+    ---@type Color3
+    ---The color of the text that displays each tile's coordinates (example A1, C5, H8... etc)
+    NewGame.TileFrame_TextColor = NewGame.TileFrame_TextColor or Color3.new(1, 1, 1)
+
+    --[[ HighLightFrame config: ]]--
+
+    ---@type string
+    ---The rbxassetid of the image to apply to the HilightFrame (Used when displaying an obstructed move)
+    NewGame.HighLightFrame_ImageId = NewGame.HighLightFrame_ImageId or "rbxassetid://123813851949107"
+
+    ---@type number
+    ---The Transparency value to use for the Gui tile highlights
+    NewGame.HighlightFrame_Transparency = NewGame.HighlightFrame_Transparency or 0.5
+
+    ---@type table
+    ---Array containing the colors to apply to the gui tile highlight for each highlight type.
+    NewGame.HighlightFrame_Colors = NewGame.HighlightFrame_Colors or {}
+    NewGame.HighlightFrame_Colors.Default = NewGame.HighlightFrame_Colors.Debug or Color3.new(1, 1, 1)
+    NewGame.HighlightFrame_Colors.Move_Possible = NewGame.HighlightFrame_Colors.Move_Possible or Color3.new(0.9, 0.75, 0.5)
+    NewGame.HighlightFrame_Colors.Move_Obstructed = NewGame.HighlightFrame_Colors.Move_Obstructed or NewGame.HighlightFrame_Colors.Move_Possible
+    NewGame.HighlightFrame_Colors.Move_Capture = NewGame.HighlightFrame_Colors.Move_Capture or Color3.new(1, 0.6, 0.4)
+
+
     --------------------------------------------------------------------------------------------------------------------------
-    NewChessGame.Gui = NewChessGame.Gui or {}
-    --------------------------------------------------------------------------------------------------------------------------
-    --The MainFrame where the Gui is placed
-    if NewBoardParams.MainFrame then
-        NewChessGui.MainFrame = NewBoardParams.MainFrame
-    else
-        error("A MainFrame must be provided to create a new ChessGui.")
+    --[[OBJECT(s) AND INSTANCE(s) HANDLING:]]--
+
+    ---@type Piece
+    ---Which piece color the LocalPlayer is playing as.
+    NewGame.PlayerColor = NewGame.PlayerColor or Piece.White
+    
+    ---@type ScreenGui
+    ---The ScreenGui where the 2D board is placed.
+    NewGame.ScreenGui = NewGame.ScreenGui or NewGame:CreateScreenGui()
+    
+    ---@type Frame
+    ---The MainFrame used to position the 2D board.
+    NewGame.MainFrame = NewGame.MainFrame or NewGame:CreateMainFrame()
+
+    NewGame.BoardFrame = NewGame.BoardFrame or NewGame:CreateBoardFrame()
+
+    ---@type number
+    ---How many files/ranks the board has, only square board supported.
+    NewGame.BoardSize = NewGame.BoardSize or 8
+   
+    ---@type table
+    ---Array that stores the matrix of the board.
+    NewGame.BoardMatrix = NewGame.BoardMatrix or {}
+    local BoardMatrix = NewGame.BoardMatrix
+
+    for File = 1, NewGame.BoardSize, 1 do
+        
+        ---@type table
+        ---Array(s) that store each files(a-h) of the board.
+        BoardMatrix[File] = BoardMatrix[File] or {}
+
+        for Rank = 1, NewGame.BoardSize, 1 do
+            
+            ---@type table
+            ---Array(s) that store the Tiles of the board.
+            BoardMatrix[File][Rank] = BoardMatrix[File][Rank] or {}
+            local GameTile = BoardMatrix[File][Rank]
+            
+            ---@type Piece
+            ---What piece is curentlly stored in that tile.
+            GameTile.Piece = GameTile.Piece or Piece.None
+
+            ---@type ImageButton
+            ---The Gui Frame(s) of the tile(s).
+            GameTile.TileFrame = GameTile.Frame or NewGame:CreateTileFrame(File, Rank)
+
+            GameTile.TileFrame.MouseEnter:Connect(function()
+                NewGame:MouseEnterTile(File, Rank)
+            end)
+
+        end
     end
-    --------------------------------------------------------------------------------------------------------------------------
-    --The "background" frame of the ChessGui.
-    NewChessGui.BoardFrame = Instance.new("Frame")
-    local BoardFrame = NewChessGui.BoardFrame
+
+    return NewGame
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function ChessGame_Client:Create(Object)
+    
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+---Creates a new ScreenGui for the Chess game.
+---@return ScreenGui ScreenGui The newlly created Screengui.
+function ChessGame_Client:CreateScreenGui()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "ChessGui"
+    ScreenGui.Parent = Player.PlayerGui
+    return ScreenGui
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+---creates a new Mainframe inside the board's ScreenGui.
+---@return Frame MainFrame The frame used to place the BoardGui
+function ChessGame_Client:CreateMainFrame()
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainFrame.Size = UDim2.new(1, 0, 0.8, 0)
+    MainFrame.BackgroundTransparency = 1
+    MainFrame.Parent = self.ScreenGui
+    return MainFrame
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+---Creates the BoardFrame of the 2d board aka: The background frame.
+---@return Frame Boardframe The "background" frame of the 2D chessboard.
+function ChessGame_Client:CreateBoardFrame()
+    local BoardFrame = Instance.new("Frame")
+    BoardFrame.Name = "BoardFrame"
     BoardFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     BoardFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
     BoardFrame.Size = UDim2.new(1, 0, 1, 0)
-    BoardFrame.BackgroundColor3 = Color3.fromHex("35374B")
+    BoardFrame.BackgroundColor3 = self.BoardFrame_Color
+    BoardFrame.BackgroundTransparency = self.BoardFrame_Transparency
 
     local BoardFrameARConstraint = Instance.new("UIAspectRatioConstraint")
     BoardFrameARConstraint.AspectType = Enum.AspectType.FitWithinMaxSize
@@ -107,118 +238,160 @@ function ChessGame_Client.new(NewBoardParams)
     BoardUICorner.Parent = BoardFrame
 
     local BoardUIStroke = Instance.new("UIStroke")
-    BoardUIStroke.Thickness = 5
-    BoardUIStroke.Color = Color3.fromHex("35374B")
+    BoardUIStroke.Thickness = self.BoardFrame_StrokeThickness
+    BoardUIStroke.Color = self.BoardFrame_Color
+    BoardUIStroke.Transparency = self.BoardFrame_Transparency
     BoardUIStroke.Parent = BoardFrame
     
-    BoardFrame.Parent = NewChessGui.MainFrame
-    --------------------------------------------------------------------------------------------------------------------------
-    ---How many files/ranks the board has, only square board supported.
-    NewChessGui.BoardSize = NewChessGui.BoardSize or 8
-    ---which color the localplayer is using
-    NewChessGui.PlayerColor = NewChessGui.PlayerColor or Piece.White
-    --------------------------------------------------------------------------------------------------------------------------
-    NewChessGui.TileMatrix = {}
-    for File = 1, NewChessGui.BoardSize, 1 do
-        NewChessGui.TileMatrix[File] = {}
-        for Rank = 1, NewChessGui.BoardSize, 1 do
-            local NewTile = Instance.new("ImageButton")
-            NewTile.AnchorPoint = Vector2.new(0.5,0.5)
-            NewTile.Size = UDim2.new(1/NewChessGui.BoardSize, -5, 1/NewChessGui.BoardSize, -5)
+    BoardFrame.Parent = self.MainFrame
+    return BoardFrame
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-            local NewTileXPosition
-            local NewTileYPosition
-            if NewChessGui.PlayerColor == Piece.White then 
-                NewTileXPosition = 1/NewChessGui.BoardSize*File-1/NewChessGui.BoardSize/2
-                NewTileYPosition = 1-(1/NewChessGui.BoardSize*Rank-1/NewChessGui.BoardSize/2)
-            elseif NewChessGui.PlayerColor == Piece.Black then
-                NewTileXPosition = 1-(1/NewChessGui.BoardSize*File-1/NewChessGui.BoardSize/2)
-                NewTileYPosition = 1/NewChessGui.BoardSize*Rank-1/NewChessGui.BoardSize/2
-            end
-            NewTile.Position = UDim2.new(NewTileXPosition, 0, NewTileYPosition, 0)
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+---Creates a new GuiTile at the specified board cordinates.
+---@param File any
+---@param Rank any
+---@return any
+function ChessGame_Client:CreateTileFrame(File, Rank)
 
-            if (File + Rank) % 2 == 0 then
-                NewTile.BackgroundColor3 = Color3.fromRGB(100,100,100)
-            else
-                NewTile.BackgroundColor3 = Color3.fromRGB(255,255,255)
-            end
-            NewTile.BackgroundTransparency = 0.7
-            NewTile:SetAttribute("Coordinate", Vector2.new(File,Rank))
+    local TileFrame = Instance.new("Frame")
+    TileFrame.Name = "TileFrame"
+    TileFrame.AnchorPoint = Vector2.new(0.5,0.5)
+    TileFrame.Size = UDim2.new(1/self.BoardSize*self.TileFrame_Size, 0, 1/self.BoardSize*self.TileFrame_Size, 0)
 
-            NewTile.ImageTransparency = 1
-
-            local TileLabel = Instance.new("TextLabel")
-            TileLabel.Text = " "..Chess_Module.Data.FileString[File]..tostring(Rank)
-            TileLabel.TextColor3 = Color3.fromRGB(226,226,226)
-            TileLabel.TextTransparency = 0.5
-            TileLabel.TextXAlignment = Enum.TextXAlignment.Left
-            TileLabel.TextYAlignment = Enum.TextYAlignment.Top
-            TileLabel.Size = UDim2.new(1, 0, 1, 0)
-            TileLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-            TileLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-            TileLabel.BackgroundTransparency = 1
-            TileLabel.Parent = NewTile
-
-            local NewTileUICorner = Instance.new("UICorner")
-            NewTileUICorner.CornerRadius = UDim.new(0.1, 0)
-            NewTileUICorner.Parent = NewTile
-
-            local NewTileUIStroke = Instance.new("UIStroke")
-            NewTileUIStroke.Thickness = 0
-            NewTileUIStroke.Parent = NewTile
-
-            NewTile.Parent = BoardFrame
-
-            NewChessGui.TileMatrix[File][Rank] = NewTile
-
-            --------------------------------------------------------------------------------------------------------------------------
-            NewTile.MouseEnter:Connect(function()
-                local GeneralTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-                local HighlightTween = TweenService:Create(NewTile.UIStroke, GeneralTweenInfo, {Thickness = 2, Transparency = 0})
-                NewTile.UIStroke.Color = Color3.fromRGB(255,255,255)
-                NewTile.UIStroke.Transparency = 1
-                HighlightTween:Play()
-
-                local PieceLabel = NewTile:FindFirstChild("PieceLabel")
-                if PieceLabel then
-                    local PieceLabelTween = TweenService:Create(PieceLabel, GeneralTweenInfo, {Position = UDim2.new(0.5, 0, 0.4, 0)})
-                    PieceLabelTween:Play()
-                end
-
-                NewTile.MouseLeave:Connect(function()
-                    HighlightTween = TweenService:Create(NewTile.UIStroke, GeneralTweenInfo, {Thickness = 0, Transparency = 1})
-                    HighlightTween:Play()
-
-                    if PieceLabel then
-                        local PieceLabelTween = TweenService:Create(PieceLabel, GeneralTweenInfo, {Position = UDim2.new(0.5, 0, 0.5, 0)})
-                        PieceLabelTween:Play()
-                    end
-
-                end)
-            end)
-            --------------------------------------------------------------------------------------------------------------------------
-            
-
-        end
+    local NewTileXPosition
+    local NewTileYPosition
+    if self.PlayerColor == Piece.White then 
+        NewTileXPosition = 1/self.BoardSize*File-1/self.BoardSize/2
+        NewTileYPosition = 1-(1/self.BoardSize*Rank-1/self.BoardSize/2)
+    elseif self.PlayerColor == Piece.Black then
+        NewTileXPosition = 1-(1/self.BoardSize*File-1/self.BoardSize/2)
+        NewTileYPosition = 1/self.BoardSize*Rank-1/self.BoardSize/2
     end
-    --------------------------------------------------------------------------------------------------------------------------
+    TileFrame.Position = UDim2.new(NewTileXPosition, 0, NewTileYPosition, 0)
+
+    if (File + Rank) % 2 == 0 then
+        TileFrame.BackgroundColor3 = self.TileFrame_DarkColor
+    else
+        TileFrame.BackgroundColor3 = self.TileFrame_LightColor
+    end
+    TileFrame.BackgroundTransparency = self.TileFrame_Transparency
+    TileFrame:SetAttribute("Coordinate", Vector2.new(File,Rank))
+
+    --TileFrame.ImageTransparency = 1
+
+    local TileLabel = Instance.new("TextLabel")
+    TileLabel.Text = string.upper(Chess_Module.Data.Alphabet[File])..tostring(Rank)
+    TileLabel.TextColor3 = self.TileFrame_TextColor
+    TileLabel.TextTransparency = 0.7
+    TileLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TileLabel.TextYAlignment = Enum.TextYAlignment.Top
+    TileLabel.TextScaled = true
+    TileLabel.Size = UDim2.new(1, 0, 0.2, 0)
+    TileLabel.AnchorPoint = Vector2.new(0, 0)
+    TileLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
+    TileLabel.BackgroundTransparency = 1
+    TileLabel.Parent = TileFrame
+
+    local HighlightFrame = Instance.new("ImageLabel")
+    HighlightFrame.Name = "HighlightFrame"
+    HighlightFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    HighlightFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    HighlightFrame.Size = UDim2.new(1, 0, 1, 0)
+    HighlightFrame.ZIndex = 100
+    HighlightFrame.BackgroundTransparency = 1
+    HighlightFrame.Image = self.HighLightFrame_ImageId
+    HighlightFrame.ImageTransparency = 1
+    HighlightFrame.Parent = TileFrame
+
+    local NewTileUICorner = Instance.new("UICorner")
+    NewTileUICorner.CornerRadius = self.TileFrame_CornerRadius
+    NewTileUICorner.Parent = TileFrame
+
+    local HighlightframeUICorner = Instance.new("UICorner")
+    HighlightframeUICorner.CornerRadius = self.TileFrame_CornerRadius
+    HighlightframeUICorner.Parent = HighlightFrame
+
+    local NewTileUIStroke = Instance.new("UIStroke")
+    NewTileUIStroke.Thickness = 0
+    NewTileUIStroke.Parent = HighlightFrame
+
+    TileFrame.Parent = self.BoardFrame
+
+    return TileFrame
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function ChessGame_Client:MouseEnterTile(File, Rank)
+    local GameTile = self.BoardMatrix[File][Rank]
+    local TileFrame = GameTile.TileFrame
+
+    local GeneralTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+
+    local TileUIStroke = TileFrame.HighlightFrame.UIStroke
+    TileUIStroke.Transparency = 1
+    TileUIStroke.Color = Color3.new(1, 1, 1)
+    local UIStrokeTween = TweenService:Create(TileUIStroke, GeneralTweenInfo, {Thickness = 3, Transparency = 0})
+    UIStrokeTween:Play()
+
+    if GameTile.PieceImage then
+        local PieceImage = GameTile.PieceImage
+        local PieceImageTween = TweenService:Create(PieceImage, GeneralTweenInfo, {Size = UDim2.new(1, 0, 1, 0)})
+        PieceImageTween:Play()
+    end
     
-    BoardFrame.Parent = NewChessGui.MainFrame
+    if GameTile.Piece ~= Piece.None then
+        local PieceMoves = Chess_Module.GetPieceMoves(File, Rank, self.BoardMatrix)
+        
+        for MoveFile, MoveFileValue in pairs(PieceMoves) do
+            for MoveRank, MoveType in pairs(PieceMoves[MoveFile]) do
+                if MoveType == "Possible" then
+                    self:Highlight2dTile(MoveFile, MoveRank, MoveType, true)--TODO: continue this function
+                end
+            end
+        end
+    end
+    --------------------------------------------------------------------------------------------------------------------------
 
-    return NewChessGui
+    TileFrame.InputBegan:Connect(function()
+        print("cvheese")
+    end)
+    
+    TileFrame.MouseLeave:Connect(function()
+        UIStrokeTween = TweenService:Create(TileUIStroke, GeneralTweenInfo, {Thickness = 0, Transparency = 1})
+        UIStrokeTween:Play()
+
+        if GameTile.PieceImage then
+            local PieceImage = GameTile.PieceImage
+            local PieceImageTween = TweenService:Create(PieceImage, GeneralTweenInfo, {Size = UDim2.new(0.9, 0, 0.9, 0)})
+            PieceImageTween:Play()
+        end
+
+    end)
+
 end
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-function ChessGui:UpdateBoard(BoardMatrix)
-    for FileIndex, FileValue in pairs(BoardMatrix) do
-        for RankIndex, RankValue in pairs(BoardMatrix[FileIndex]) do
-            if BoardMatrix[FileIndex][RankIndex] == Piece.None then
-                if self.TileMatrix[FileIndex][RankIndex]:FindFirstChild("PieceLabel") then
-                    self.TileMatrix[FileIndex][RankIndex].PieceLabel:Destroy()
-                end
+function ChessGame_Client:Highlight2dTile(File, Rank, Type, Value)
+    local GameTile = self.BoardMatrix[File][Rank]
+    local TileFrame = GameTile.TileFrame
+    if Type == "Possible" and Value == true then
+        local HighlightFrame
+    end
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function ChessGame_Client:UpdateBoard(NewBoardMatrix)
+    for File = 1, self.BoardSize, 1 do
+        for Rank = 1, self.BoardSize do
+            if NewBoardMatrix[File][Rank] == Piece.None then
+                self:DeletePiece(File, Rank)
             else
-                self:CreatePiece(FileIndex, RankIndex, BoardMatrix[FileIndex][RankIndex])
+                self:CreatePiece(File, Rank, NewBoardMatrix[File][Rank])
             end
         end
     end
@@ -226,7 +399,69 @@ end
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-function ChessGui:CreatePiece(File, Rank, PieceCode)
+---Removes a piece from the local chess board.
+---@param File number
+---@param Rank number
+function ChessGame_Client:DeletePiece(File, Rank)
+    local GameTile = self.BoardMatrix[File][Rank]
+    GameTile.Piece = Piece.None
+    if GameTile.PieceImage then 
+        GameTile.PieceImage:Destroy()
+        GameTile.PieceImage = nil
+    end
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+---Creates a new piece at the provided tile (for now it only supports 2d pieces)
+---@param File number
+---@param Rank number
+---@param NewPiece Piece The piece to create
+function ChessGame_Client:CreatePiece(File, Rank, NewPiece)
+    local GameTile = self.BoardMatrix[File][Rank]
+    GameTile["Piece"] = NewPiece
+
+    self:Create2dPiece(File, Rank, NewPiece)
+    --TODO: self:Create3dPiece(File, Rank, NewPiece)
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function ChessGame_Client:Create2dPiece(File, Rank, NewPiece)
+    local GameTile = self.BoardMatrix[File][Rank]
+    GameTile["Piece"] = NewPiece
+
+    local PieceImageList = {
+        [ Piece.White + Piece.King ] = "rbxassetid://131158620290995",
+        [ Piece.White + Piece.Pawn ] = "rbxassetid://138241308799606",
+        [ Piece.White + Piece.Knight ] = "rbxassetid://87502654853841",
+        [ Piece.White + Piece.Bishop ] = "rbxassetid://124200432163916",
+        [ Piece.White + Piece.Rook ] = "rbxassetid://131889736443318",
+        [ Piece.White + Piece.Queen ] = "rbxassetid://121994979957080",
+        
+        [ Piece.Black + Piece.King ] = "rbxassetid://138277852159029",
+        [ Piece.Black + Piece.Pawn ] = "rbxassetid://79703474237153",
+        [ Piece.Black + Piece.Knight ] = "rbxassetid://81040715472662",
+        [ Piece.Black + Piece.Bishop ] = "rbxassetid://120857166062773",
+        [ Piece.Black + Piece.Rook ] = "rbxassetid://138921760605947",
+        [ Piece.Black + Piece.Queen ] = "rbxassetid://92861639866902"
+        }
+
+    local PieceImage = Instance.new("ImageLabel")
+    PieceImage.Name = "PieceImage"
+    PieceImage.AnchorPoint = Vector2.new(0.5, 0.5)
+    PieceImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+    PieceImage.Size = UDim2.new(0.9, 0, 0.9, 0)
+    PieceImage.BackgroundTransparency = 1
+    PieceImage.Image = PieceImageList[NewPiece]
+    PieceImage.Parent = GameTile.TileFrame
+
+    GameTile.PieceImage = PieceImage
+end
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+--────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+--[[function ChessGui:CreatePiece(File, Rank, PieceCode)
     local NewPieceLabel = Instance.new("ImageLabel")
     NewPieceLabel.Name = "PieceLabel"
     NewPieceLabel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -235,7 +470,7 @@ function ChessGui:CreatePiece(File, Rank, PieceCode)
     NewPieceLabel.BackgroundTransparency = 1
     NewPieceLabel.Image = PieceImageList[PieceCode]
     NewPieceLabel.Parent = self.TileMatrix[File][Rank]
-end
+end]]
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 --[[
@@ -308,7 +543,7 @@ end]]
 --------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------
----Creates a Gui piece at the provided coordinate
+--[[-Creates a Gui piece at the provided coordinate
 ---@param TileMatrix table 2D matrix array countaining all the Gui tiles that make the visual board
 ---@param PieceCode number The code of the piece to create
 ---@param Coordinate Vector2 Where to place the piece
@@ -323,11 +558,11 @@ local function CreateGuiPiece(TileMatrix, PieceCode, Coordinate)
     NewPiece.BackgroundTransparency = 1
     NewPiece.Parent = TileMatrix[Coordinate.X][Coordinate.Y]
 
-end
+end]]
 --------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------
-local function UpdateGuiBoard(BoardMatrix, TileMatrix)
+--[[local function UpdateGuiBoard(BoardMatrix, TileMatrix)
 
     for RowIndex, RowValue in pairs(BoardMatrix) do
         for ColumnIndex, ColumnValue in pairs(BoardMatrix[RowIndex]) do
@@ -340,12 +575,14 @@ local function UpdateGuiBoard(BoardMatrix, TileMatrix)
             end
         end
     end
-end
+end]]
 --------------------------------------------------------------------------------------------------------------------------
 
-local FunnyChessBoard = ChessGui.new({MainFrame = Debug_BoardMainFrame})
---local TileMatrix = CreateGuiBoardTiles(Debug_BoardFrame)
+local FunnyChessGameClient= ChessGame_Client.new()
+print(FunnyChessGameClient)
+
 local RE_UpdateBoard = script.Parent.Events.RE_UpdateBoard
-RE_UpdateBoard.OnClientEvent:Connect(function(BoardMatrix)
-    FunnyChessBoard:UpdateBoard(BoardMatrix)
+RE_UpdateBoard.OnClientEvent:Connect(function(NewBoardMatrix)
+    --print("hi")
+    FunnyChessGameClient:UpdateBoard(NewBoardMatrix)
 end)

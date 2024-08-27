@@ -34,17 +34,17 @@ local Piece = Chess_Module.Data.Piece
 CHESS GAME CLASS:
 ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔]]
 
----@class ChessGame
+---@class ChessGame_Server
 ---Internal server-side representation of an entire game of chess
-local ChessGame = {}
-ChessGame.__index = ChessGame
+local ChessGame_Server = {}
+ChessGame_Server.__index = ChessGame_Server
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ---Creates a new ChessGame array/object
 ---@param NewGameParams table Array containing the desired info for the chess game.
 ---@return table NewChessGame The newlly created ChessGame array.
-function ChessGame.new(NewGameParams)
-    local NewGame = setmetatable(NewGameParams or {}, ChessGame)
+function ChessGame_Server.new(NewGameParams)
+    local NewGame = setmetatable(NewGameParams or {}, ChessGame_Server)
     --------------------------------------------------------------------------------------------------------------------------
     ---Hoe many files/ranks the board will have, only square board suported.
     NewGame.BoardSize = NewGame.BoardSize or 8
@@ -74,31 +74,14 @@ end
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ---Places pieces (their numerical code really) on the ChessGame's BoardMatrix based on a Fen string
 ---@param FenString string The fen string to apply to that board.
-function ChessGame:LoadPositionFromFen(FenString)
+function ChessGame_Server:LoadPositionFromFen(FenString)
     local PieceTypeFromSymbol = {
         ["k"] = Piece.King, ["p"] = Piece.Pawn, ["n"] = Piece.Knight,
         ["b"] = Piece.Bishop, ["r"] = Piece.Rook, ["q"] = Piece.Queen
     }
     local BoardMatrix = self.BoardMatrix
     local FenList = string.split(FenString, "")
-    local CurrentRow = 1
-    local CurrentColumn = 1
-    --[[for Index, Character in pairs(FenList) do
-        if Character == "/" then
-            CurrentRow = CurrentRow + 1
-            CurrentColumn = 1
-        elseif tonumber(Character) then
-            CurrentColumn = CurrentColumn + tonumber(Character)
-        else
-            BoardMatrix[CurrentRow][CurrentColumn] = BoardMatrix[CurrentRow][CurrentColumn] + PieceTypeFromSymbol[string.lower(Character)]
-            if string.match(Character, "%u") then--Checking if the letter is upper case, if so it means its white
-            BoardMatrix[CurrentRow][CurrentColumn] = BoardMatrix[CurrentRow][CurrentColumn] + Piece.White
-            else--Means the character is lower case so it should be a black piece
-            BoardMatrix[CurrentRow][CurrentColumn] = BoardMatrix[CurrentRow][CurrentColumn] + Piece.Black
-            end
-            CurrentColumn = CurrentColumn + 1
-        end
-    end]]
+
     local FileAmount = #BoardMatrix
     local RankAmount = #BoardMatrix[1]
     local CurrentRank = RankAmount
@@ -127,7 +110,7 @@ end
 ---Moves a piece on the internal board
 ---@param StartTile Vector2 Corts of the start tile.
 ---@param EndTile Vector2 Cords of the end tile.
-function ChessGame:MovePiece(StartTile, EndTile)
+function ChessGame_Server:MovePiece(StartTile, EndTile)
     local BoardMatrix = self.BoardMatrix
     
     local CodeOnStarterTile = BoardMatrix[StartTile.X][StartTile.Y]
@@ -137,7 +120,7 @@ end
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ---Prints the game's board as unicode characters in the terminal.
-function ChessGame:PrintBoard()
+function ChessGame_Server:PrintBoard()
     local PieceUnicodeList = {
         [Piece.None] = "⛶",
 
@@ -149,10 +132,10 @@ function ChessGame:PrintBoard()
         [Piece.Bishop + Piece.Black] = "♝", [Piece.Rook + Piece.Black] = "♜",
         [Piece.Queen + Piece.Black] = "♛", [Piece.King + Piece.Black] = "♚",
     }
-
+    
     local BoardString = "\n"
-    for File = 1, 8, 1 do
-        for Rank = 1, 8 , 1 do
+    for File = 1, self.BoardSize, 1 do
+        for Rank = 1, self.BoardSize , 1 do
 
             BoardString = BoardString..PieceUnicodeList[self.BoardMatrix[File][Rank]].." "
         end
@@ -176,7 +159,7 @@ FUNCTIONS:
 ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔]]
 
 
-local FunnyGame = ChessGame.new()
+local FunnyGame = ChessGame_Server.new({StarterFen = "rnbqkbnr/pppppppp/8/8/5R/8/PPPPPPPP/RNBQKBNR"})
 
 print(FunnyGame)
 task.wait(1)
