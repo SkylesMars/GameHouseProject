@@ -106,6 +106,43 @@ end
 --------------------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------------------------------------------------
+MovementFunctions.King = function(File, Rank, BoardMatrix, MoveArray)
+    local CurrentPiece = BoardMatrix[File][Rank].Piece
+    local CurrentPieceColor = Chess_Module.GetPieceColor(CurrentPiece)
+
+    local function GetMoves(FileOffset, RankOffset)
+        local CurrentFile = File + FileOffset
+        local CurrentRank = Rank + RankOffset
+        local AdjacentTile
+        if BoardMatrix[CurrentFile] and BoardMatrix[CurrentFile][CurrentRank] then
+            AdjacentTile = BoardMatrix[CurrentFile][CurrentRank]
+        end
+        if AdjacentTile then
+            if AdjacentTile.Piece == Piece.None then
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Possible"
+            elseif Chess_Module.GetPieceColor(AdjacentTile.Piece) == CurrentPieceColor then
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Obstructed"
+            else
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Capture"
+            end
+        end
+    end
+
+    GetMoves(1, 1)
+    GetMoves(1, 0)
+    GetMoves(1, -1)
+    GetMoves(0, 1)
+    GetMoves(0, -1)
+    GetMoves(-1, 1)
+    GetMoves(-1, 0)
+    GetMoves(-1, -1)
+end
+--------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------
 MovementFunctions.Rook = function(File, Rank, BoardMatrix, MoveArray)
     local CurrentPiece = BoardMatrix[File][Rank].Piece
     local CurrentPieceColor = Chess_Module.GetPieceColor(CurrentPiece)
@@ -127,14 +164,14 @@ MovementFunctions.Rook = function(File, Rank, BoardMatrix, MoveArray)
                 LoopCheck = false
             elseif AdjacentTile.Piece == Piece.None then
                 MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
-                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Possible"
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Possible"
             elseif Chess_Module.GetPieceColor(AdjacentTile.Piece) == CurrentPieceColor then
                 MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
-                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Obstructed"
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Obstructed"
                 LoopCheck = false
             else
                 MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
-                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Capture"
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Capture"
                 LoopCheck = false
             end
         end
@@ -154,17 +191,81 @@ MovementFunctions.Rook = function(File, Rank, BoardMatrix, MoveArray)
     
 end
 --------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------
+MovementFunctions.Bishop = function(File, Rank, BoardMatrix, MoveArray)
+    local CurrentPiece = BoardMatrix[File][Rank].Piece
+    local CurrentPieceColor = Chess_Module.GetPieceColor(CurrentPiece)
+
+    local CurrentFile = File
+    local CurrentRank = Rank
+
+    local LoopCheck = true
+    
+    local function GetMoves(FileOffset, RankOffset)
+        while  LoopCheck == true do
+            CurrentFile = CurrentFile + FileOffset
+            CurrentRank = CurrentRank + RankOffset
+            local AdjacentTile
+            if BoardMatrix[CurrentFile] and BoardMatrix[CurrentFile][CurrentRank] then
+                AdjacentTile = BoardMatrix[CurrentFile][CurrentRank]
+            end
+            if not AdjacentTile then
+                LoopCheck = false
+            elseif AdjacentTile.Piece == Piece.None then
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Possible"
+            elseif Chess_Module.GetPieceColor(AdjacentTile.Piece) == CurrentPieceColor then
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Obstructed"
+                LoopCheck = false
+            else
+                MoveArray[CurrentFile] = MoveArray[CurrentFile] or {}
+                MoveArray[CurrentFile][CurrentRank] = MoveArray[CurrentFile][CurrentRank] or "Move_Capture"
+                LoopCheck = false
+            end
+        end
+        CurrentFile = File
+        CurrentRank = Rank
+        return
+    end
+
+    LoopCheck = true
+    GetMoves(1, 1)
+    LoopCheck = true
+    GetMoves(1, -1)
+    LoopCheck = true
+    GetMoves(-1, 1)
+    LoopCheck = true
+    GetMoves(-1, -1)
+    
+end
+--------------------------------------------------------------------------------------------------------------------------
+
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 local PieceMovementList = {
     --------------------------------------------------------------------------------------------------------------------------
     [Piece.Pawn] = {
-        MovementFunctions.PawnMovement
+        MovementFunctions.Pawn
     },
     --------------------------------------------------------------------------------------------------------------------------
     [Piece.Rook] = {
         MovementFunctions.Rook
+    },
+    --------------------------------------------------------------------------------------------------------------------------
+    [Piece.Bishop] = {
+        MovementFunctions.Bishop
+    },
+    --------------------------------------------------------------------------------------------------------------------------
+    [Piece.Queen] = {
+        MovementFunctions.Rook,
+        MovementFunctions.Bishop
+    },
+    --------------------------------------------------------------------------------------------------------------------------
+    [Piece.King] = {
+        MovementFunctions.King
     },
     --------------------------------------------------------------------------------------------------------------------------
 }

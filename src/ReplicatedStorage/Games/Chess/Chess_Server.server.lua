@@ -159,7 +159,7 @@ FUNCTIONS:
 ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔]]
 
 
-local FunnyGame = ChessGame_Server.new({StarterFen = "rnbqkbnr/pppppppp/8/8/5R/8/PPPPPPPP/RNBQKBNR"})
+local FunnyGame = ChessGame_Server.new({StarterFen = "rnbqkbnr/pppppppp/8/8/1R2K2Q2B/8/PPPPPPPP/RNBQKBNR"})
 
 print(FunnyGame)
 task.wait(1)

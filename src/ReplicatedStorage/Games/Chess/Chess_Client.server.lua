@@ -118,10 +118,15 @@ function ChessGame_Client.new(NewBoardParams)
     ---The Transparency value to use for the Gui tile highlights
     NewGame.HighlightFrame_Transparency = NewGame.HighlightFrame_Transparency or 0.5
 
+    ---@type number
+    ---The Thickness value to apply to the HighLightFrame UIStroke when required.
+    NewGame.HighlightFrame_StrokeThickness = NewGame.HighlightFrame_StrokeThickness or 3
+
     ---@type table
     ---Array containing the colors to apply to the gui tile highlight for each highlight type.
     NewGame.HighlightFrame_Colors = NewGame.HighlightFrame_Colors or {}
     NewGame.HighlightFrame_Colors.Default = NewGame.HighlightFrame_Colors.Debug or Color3.new(1, 1, 1)
+    NewGame.HighlightFrame_Colors.Hover = NewGame.HighlightFrame_Colors.Hover or Color3.new(1,1,1)
     NewGame.HighlightFrame_Colors.Move_Possible = NewGame.HighlightFrame_Colors.Move_Possible or Color3.new(0.9, 0.75, 0.5)
     NewGame.HighlightFrame_Colors.Move_Obstructed = NewGame.HighlightFrame_Colors.Move_Obstructed or NewGame.HighlightFrame_Colors.Move_Possible
     NewGame.HighlightFrame_Colors.Move_Capture = NewGame.HighlightFrame_Colors.Move_Capture or Color3.new(1, 0.6, 0.4)
@@ -255,7 +260,7 @@ end
 ---@return any
 function ChessGame_Client:CreateTileFrame(File, Rank)
 
-    local TileFrame = Instance.new("Frame")
+    local TileFrame = Instance.new("ImageButton")
     TileFrame.Name = "TileFrame"
     TileFrame.AnchorPoint = Vector2.new(0.5,0.5)
     TileFrame.Size = UDim2.new(1/self.BoardSize*self.TileFrame_Size, 0, 1/self.BoardSize*self.TileFrame_Size, 0)
@@ -279,7 +284,7 @@ function ChessGame_Client:CreateTileFrame(File, Rank)
     TileFrame.BackgroundTransparency = self.TileFrame_Transparency
     TileFrame:SetAttribute("Coordinate", Vector2.new(File,Rank))
 
-    --TileFrame.ImageTransparency = 1
+    TileFrame.ImageTransparency = 1
 
     local TileLabel = Instance.new("TextLabel")
     TileLabel.Text = string.upper(Chess_Module.Data.Alphabet[File])..tostring(Rank)
@@ -315,6 +320,7 @@ function ChessGame_Client:CreateTileFrame(File, Rank)
 
     local NewTileUIStroke = Instance.new("UIStroke")
     NewTileUIStroke.Thickness = 0
+    NewTileUIStroke.Transparency = 1
     NewTileUIStroke.Parent = HighlightFrame
 
     TileFrame.Parent = self.BoardFrame
@@ -325,16 +331,13 @@ end
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 function ChessGame_Client:MouseEnterTile(File, Rank)
+    self.CurrentHover2dTile = self.BoardMatrix[File][Rank].TileFrame
     local GameTile = self.BoardMatrix[File][Rank]
     local TileFrame = GameTile.TileFrame
 
     local GeneralTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 
-    local TileUIStroke = TileFrame.HighlightFrame.UIStroke
-    TileUIStroke.Transparency = 1
-    TileUIStroke.Color = Color3.new(1, 1, 1)
-    local UIStrokeTween = TweenService:Create(TileUIStroke, GeneralTweenInfo, {Thickness = 3, Transparency = 0})
-    UIStrokeTween:Play()
+    self:Highlight2dTile(File, Rank, true, "Hover")
 
     if GameTile.PieceImage then
         local PieceImage = GameTile.PieceImage
@@ -342,27 +345,27 @@ function ChessGame_Client:MouseEnterTile(File, Rank)
         PieceImageTween:Play()
     end
     
+    local PieceMoves
     if GameTile.Piece ~= Piece.None then
-        local PieceMoves = Chess_Module.GetPieceMoves(File, Rank, self.BoardMatrix)
-        
+        PieceMoves = Chess_Module.GetPieceMoves(File, Rank, self.BoardMatrix)
         for MoveFile, MoveFileValue in pairs(PieceMoves) do
-            for MoveRank, MoveType in pairs(PieceMoves[MoveFile]) do
-                if MoveType == "Possible" then
-                    self:Highlight2dTile(MoveFile, MoveRank, MoveType, true)--TODO: continue this function
-                end
+            for MoveRank, MoveType in pairs(MoveFileValue) do
+                self:Highlight2dTile(MoveFile, MoveRank, true, MoveType)
             end
         end
     end
     --------------------------------------------------------------------------------------------------------------------------
-
-    TileFrame.InputBegan:Connect(function()
-        print("cvheese")
-    end)
     
     TileFrame.MouseLeave:Connect(function()
-        UIStrokeTween = TweenService:Create(TileUIStroke, GeneralTweenInfo, {Thickness = 0, Transparency = 1})
-        UIStrokeTween:Play()
+        self:Highlight2dTile(File, Rank, false)
 
+        if PieceMoves then
+            for MoveFile, MoveFileValue in pairs(PieceMoves) do
+                for MoveRank, MoveType in pairs(MoveFileValue) do
+                    self:Highlight2dTile(MoveFile, MoveRank, false)
+                end
+            end
+        end
         if GameTile.PieceImage then
             local PieceImage = GameTile.PieceImage
             local PieceImageTween = TweenService:Create(PieceImage, GeneralTweenInfo, {Size = UDim2.new(0.9, 0, 0.9, 0)})
@@ -375,11 +378,39 @@ end
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-function ChessGame_Client:Highlight2dTile(File, Rank, Type, Value)
+---Highlights the gui tile using the HighLightFrame
+---@param File number
+---@param Rank number
+---@param Value boolean Determines if the highlight should be turned on or off
+---@param Type string The key used to identify what type of highlight to apply (Not required if Value = false)
+function ChessGame_Client:Highlight2dTile(File, Rank, Value, Type)
     local GameTile = self.BoardMatrix[File][Rank]
-    local TileFrame = GameTile.TileFrame
-    if Type == "Possible" and Value == true then
-        local HighlightFrame
+    local HighlightFrame = GameTile.TileFrame.HighlightFrame
+    local GeneralTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+    local FrameTween, StrokeTween
+    if Value == false then
+        FrameTween = TweenService:Create(HighlightFrame, GeneralTweenInfo, {BackgroundTransparency = 1, ImageTransparency = 1})
+        StrokeTween = TweenService:Create(HighlightFrame.UIStroke, GeneralTweenInfo, {Thickness = 0, Transparency = 1})
+    elseif Type == "Hover" then
+        HighlightFrame.UIStroke.Color = self.HighlightFrame_Colors.Hover
+        StrokeTween = TweenService:Create(HighlightFrame.UIStroke, GeneralTweenInfo, {Transparency = 0, Thickness = self.HighlightFrame_StrokeThickness})
+    elseif Type == "Move_Possible" then
+        HighlightFrame.BackgroundColor3 = self.HighlightFrame_Colors.Move_Possible
+        FrameTween = TweenService:Create(HighlightFrame, GeneralTweenInfo, {BackgroundTransparency = self.HighlightFrame_Transparency})
+    elseif Type == "Move_Obstructed" then
+        HighlightFrame.ImageColor3 = self.HighlightFrame_Colors.Move_Obstructed
+        FrameTween = TweenService:Create(HighlightFrame, GeneralTweenInfo, {ImageTransparency = self.HighlightFrame_Transparency})
+    elseif Type == "Move_Capture" then
+        HighlightFrame.BackgroundColor3 = self.HighlightFrame_Colors.Move_Capture
+        HighlightFrame.UIStroke.Color = self.HighlightFrame_Colors.Move_Capture
+        FrameTween = TweenService:Create(HighlightFrame, GeneralTweenInfo, {BackgroundTransparency = self.HighlightFrame_Transparency})
+        StrokeTween = TweenService:Create(HighlightFrame.UIStroke, GeneralTweenInfo, {Transparency = self.HighlightFrame_Transparency, Thickness = self.HighlightFrame_StrokeThickness})
+    end
+    if FrameTween then
+        FrameTween:Play()
+    end
+    if StrokeTween then
+        StrokeTween:Play()
     end
 end
 --────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -454,6 +485,7 @@ function ChessGame_Client:Create2dPiece(File, Rank, NewPiece)
     PieceImage.Size = UDim2.new(0.9, 0, 0.9, 0)
     PieceImage.BackgroundTransparency = 1
     PieceImage.Image = PieceImageList[NewPiece]
+    PieceImage.ZIndex = 200
     PieceImage.Parent = GameTile.TileFrame
 
     GameTile.PieceImage = PieceImage
